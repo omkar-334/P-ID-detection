@@ -1,13 +1,11 @@
-import time
 import warnings
 
 import torch
-from torchvision.models.detection import fasterrcnn_resnet50_fpn
-from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 
 from dataset import PIDJSONDataset, get_dataloaders
 from trainer import Trainer
-from utils import evaluate_model, plot_training_curves
+from utils import plot_training_curves
+from wrapper import Wrapper
 
 warnings.filterwarnings("ignore")
 
@@ -56,17 +54,11 @@ num_classes = len(dataset.class_names)  # background + word + line + symbols
 
 print(f"Total classes (incl. background): {num_classes}")
 
-
-# Load model with pretrained backbone only (no head)
-model = fasterrcnn_resnet50_fpn(weights_backbone="DEFAULT", weights=None)
-
-# Replace the classifier head
-in_features = model.roi_heads.box_predictor.cls_score.in_features
-model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
-model.to(device)
+# Create model wrapper
+wrapper = Wrapper(device=device, num_classes=num_classes)
 
 # ---------------- Trainer ----------------
-trainer = Trainer(model, device=device, lr=config["learning_rate"])
+trainer = Trainer(wrapper, device=device, lr=config["learning_rate"])
 
 # ---------------- Training ----------------
 print("Starting training...")
@@ -74,11 +66,11 @@ trainer.train(train_loader, val_loader=val_loader, epochs=config["epochs"])
 
 # ---------------- Evaluation ----------------
 print("Evaluating on test set...")
-metrics = evaluate_model(
-    trainer,
+metrics = trainer.evaluate(
     test_loader,
     iou_threshold=config["iou_threshold"],
     confidence_threshold=config["confidence_threshold"],
+    class_names=dataset.class_names,
 )
 
 print("\n=== FINAL RESULTS ===")
@@ -93,16 +85,9 @@ print(f"Average Inference Time: {metrics['avg_inference_time']:.4f} sec/image")
 plot_training_curves(trainer, save_path="models/training_curves.png")
 
 # ---------------- Save Model ----------------
-now = time.strftime("%Y%m%d_%H%M%S")
-torch.save(
-    {
-        "model_state_dict": model.state_dict(),
-        "config": config,
-        "metrics": metrics,
-        "class_names": dataset.class_names,
-    },
-    f"models/pid_detection_model_{now}.pth",
+model_path = wrapper.save_model(
+    config=config, class_names=dataset.class_names, metrics=metrics, name="final_model"
 )
 
-print(f"\nModel saved as 'models/pid_detection_model_{now}.pth'")
+print(f"\nModel saved as '{model_path}'")
 print("Training curves saved as 'models/training_curves.png'")
