@@ -5,7 +5,12 @@ import cv2
 import torch
 from torch.utils.data import DataLoader, Dataset, random_split
 
-from preprocess import preprocess_image
+from preprocess import (
+    preprocess_image,
+    preprocess_image_for_line,
+    preprocess_image_for_symbol,
+    preprocess_image_for_word,
+)
 
 
 class PIDJSONDataset(Dataset):
@@ -22,8 +27,10 @@ class PIDJSONDataset(Dataset):
         images_dir="images",
         ann_dir="annotations",
         transform=None,
-        symbol_mode="individual",
+        symbol_mode="unified",
+        task="all",
     ):
+        assert task in ["all", "symbol", "word", "line"]
         assert symbol_mode in ["individual", "unified"], (
             "symbol_mode must be 'individual' or 'unified'"
         )
@@ -31,6 +38,7 @@ class PIDJSONDataset(Dataset):
         self.ann_dir = Path(ann_dir)
         self.transform = transform
         self.symbol_mode = symbol_mode
+        self.task = task
 
         # Collect files
         self.json_files = sorted(self.ann_dir.glob("*.json"))
@@ -106,6 +114,9 @@ class PIDJSONDataset(Dataset):
 
         boxes, labels = [], []
         for obj in ann["objects"]:
+            if self.task != "all" and obj["category"] != self.task:
+                continue
+
             if obj["category"] == "symbol":
                 if self.symbol_mode == "individual":
                     cls_id = int(obj["class_id"])
@@ -121,7 +132,7 @@ class PIDJSONDataset(Dataset):
             else:
                 continue
             boxes.append(self.sanitize(obj["bbox"]))
-            labels.append(label)
+            labels.append(label if self.task == "all" else 1)
 
         if len(boxes) == 0:
             return None
@@ -133,7 +144,13 @@ class PIDJSONDataset(Dataset):
         # Convert image to tensor
         if self.transform is not None:
             image = self.transform(image)
-        else:
+        elif self.task == "symbol":
+            image = preprocess_image_for_symbol(image)
+        elif self.task == "word":
+            image = preprocess_image_for_word(image)
+        elif self.task == "line":
+            image = preprocess_image_for_line(image)
+        else:  # all
             image = preprocess_image(image)
 
         target = {
@@ -154,19 +171,17 @@ def collate_fn(batch):
 
 
 def get_dataloaders(
+    dataset,
     batch_size=4,
     train_split=0.7,
     val_split=0.15,
     num_workers=0,
-    images_dir="images",
-    ann_dir="annotations",
-    symbol_mode="individual",
 ):
-    dataset = PIDJSONDataset(
-        images_dir=images_dir,
-        ann_dir=ann_dir,
-        symbol_mode=symbol_mode,
-    )
+    # dataset = PIDJSONDataset(
+    #     images_dir=images_dir,
+    #     ann_dir=ann_dir,
+    #     symbol_mode=symbol_mode,
+    # )
 
     total_size = len(dataset)
     train_size = int(train_split * total_size)

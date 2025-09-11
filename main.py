@@ -48,7 +48,7 @@ train_loader, val_loader, test_loader = get_dataloaders(
 dataset = PIDJSONDataset(
     images_dir=IMAGES_DIR,
     ann_dir=ANN_DIR,
-    device=device,
+    symbol_mode="unified",
 )
 num_classes = len(dataset.class_names)  # background + word + line + symbols
 
