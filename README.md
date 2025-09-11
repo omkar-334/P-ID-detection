@@ -3,7 +3,7 @@
 ## First steps
 
 My first step was to properly define the dataset, so I wrote a script to load the annotations and convert it into a JSON. 
-I tried training a yolov8n locally on macOS first, but two problem plagued me -> I was not familiar with yolo format and training on MPS was really slow. I kept getting label errors and my system froze at one point.
+I tried training a yolov8n locally on macOS first, but two problem plagued me -> I was not familiar with yolo format and training on MPS was really slow. I kept getting label errors and my system froze at one point. (wasted one day on this, and I'm also new to macOS)
 
 So after this I converted the dataset into zip files and uploaded to huggingface (This makes it really easy to download on cloud GPUs, taking ~10s to download 1 GB. I used a RTX 4090 on https://vast.ai/products/gpu-cloud for these experiments).
 I then went ahead with Pytorch Faster R-CNN model, and since I already had the annotations, it was easy to use a pytorch dataset and dataloader.
