@@ -5,6 +5,8 @@ import cv2
 import torch
 from torch.utils.data import DataLoader, Dataset, random_split
 
+from preprocess import preprocess_image
+
 
 class PIDJSONDataset(Dataset):
     """
@@ -20,7 +22,6 @@ class PIDJSONDataset(Dataset):
         images_dir="images",
         ann_dir="annotations",
         transform=None,
-        device="cpu",
         symbol_mode="individual",
     ):
         assert symbol_mode in ["individual", "unified"], (
@@ -29,7 +30,6 @@ class PIDJSONDataset(Dataset):
         self.images_dir = Path(images_dir)
         self.ann_dir = Path(ann_dir)
         self.transform = transform
-        self.device = device
         self.symbol_mode = symbol_mode
 
         # Collect files
@@ -127,19 +127,19 @@ class PIDJSONDataset(Dataset):
             return None
 
         # Convert to tensors
-        boxes = torch.tensor(boxes, dtype=torch.float32, device=self.device)
-        labels = torch.tensor(labels, dtype=torch.int64, device=self.device)
+        boxes = torch.tensor(boxes, dtype=torch.float32)
+        labels = torch.tensor(labels, dtype=torch.int64)
 
         # Convert image to tensor
-        if self.transform:
+        if self.transform is not None:
             image = self.transform(image)
         else:
-            image = torch.from_numpy(image).permute(2, 0, 1).float() / 255.0
+            image = preprocess_image(image)
 
         target = {
             "boxes": boxes,
             "labels": labels,
-            "image_id": torch.tensor([int(data_idx)], device=self.device),
+            "image_id": torch.tensor([int(data_idx)]),
         }
         return image, target
 
@@ -158,7 +158,6 @@ def get_dataloaders(
     train_split=0.7,
     val_split=0.15,
     num_workers=0,
-    device="cpu",
     images_dir="images",
     ann_dir="annotations",
     symbol_mode="individual",
@@ -166,7 +165,6 @@ def get_dataloaders(
     dataset = PIDJSONDataset(
         images_dir=images_dir,
         ann_dir=ann_dir,
-        device=device,
         symbol_mode=symbol_mode,
     )
 
