@@ -5,7 +5,7 @@
 My first step was to properly define the dataset, so I wrote a script to load the annotations and convert it into a JSON. 
 I tried training a yolov8n locally on macOS first, but two problem plagued me -> I was not familiar with yolo format and training on MPS was really slow. I kept getting label errors and my system froze at one point.
 
-So after this I converted the dataset into zip files and uploaded to huggingface (This makes it really easy to download on cloud GPUs, taking ~10s to download 1 GB. I used a RTX 4090 on vast.ai for these experiments).
+So after this I converted the dataset into zip files and uploaded to huggingface (This makes it really easy to download on cloud GPUs, taking ~10s to download 1 GB. I used a RTX 4090 on https://vast.ai/products/gpu-cloud for these experiments).
 I then went ahead with Pytorch Faster R-CNN model, and since I already had the annotations, it was easy to use a pytorch dataset and dataloader.
 I was confused on what was the difference between `line` and `line2`, so i visualized the bounding boxes and found out that `line2` is the boundary lines for the whole diagram.
 
