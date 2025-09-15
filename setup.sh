@@ -1,12 +1,12 @@
 #!/bin/bash
-git clone https://github.com/omkar-334/P-ID-detection code
+git clone https://github.com/omkar-334/rcnn code
 cd code || exit
 pip install -r requirements.txt
 
 # use hf token
 huggingface-cli login
 
-# to use hf_transfer
+# to use hf_transfer for faster downloads
 export HF_HUB_ENABLE_HF_TRANSFER=1
 
 huggingface-cli download omkar334/PIDdataset annotations.zip --repo-type dataset --local-dir .

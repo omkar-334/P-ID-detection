@@ -3,9 +3,9 @@
 ## First steps
 
 My first step was to properly define the dataset, so I wrote a script to load the annotations and convert it into a JSON. 
-I tried training a yolov8n locally on macOS first, but two problem plagued me -> I was not familiar with yolo format and training on MPS was really slow. I kept getting label errors and my system froze at one point.
+I tried training a yolov8n locally on macOS first, but two problem plagued me -> I was not familiar with yolo format and training on MPS was really slow. I kept getting label errors and my system froze at one point. (wasted one day on this, and I'm also new to macOS)
 
-So after this I converted the dataset into zip files and uploaded to huggingface (This makes it really easy to download on cloud GPUs, taking ~10s to download 1 GB).
+So after this I converted the dataset into zip files and uploaded to huggingface (This makes it really easy to download on cloud GPUs, taking ~10s to download 1 GB. I used a RTX 4090 on https://vast.ai/products/gpu-cloud for these experiments).
 I then went ahead with Pytorch Faster R-CNN model, and since I already had the annotations, it was easy to use a pytorch dataset and dataloader.
 I was confused on what was the difference between `line` and `line2`, so i visualized the bounding boxes and found out that `line2` is the boundary lines for the whole diagram.
 I used fast.ai for these experiments.
@@ -148,7 +148,7 @@ https://scholar.google.com/scholar_url?url=https://academic.oup.com/jcde/article
 
 ## Code Explanation
 
-- Use `setup.sh`
+- Use `setup.sh` to clone the repo, install requirements and download the processed dataset.
 
 - Detection tasks are split into **three tasks** - `symbol`, `word`, `line`  
   - For simplicity, **all symbols are treated as a single class** (`unified`) instead of individual symbol types.
@@ -158,7 +158,7 @@ https://scholar.google.com/scholar_url?url=https://academic.oup.com/jcde/article
   - Words: 2 classes (background + word)
   - Lines: 2 classes (background + line)
 
-- `load.py` parses all `.npy` files and creates `.json` files for annotations, which makes it easier to load, instead of parsing every time while training.
+- `load.py` parses all `.npy` files and creates `.json` files for annotations, which makes it easier to load, instead of parsing every time while training. (not needed unless using raw dataset)
 
 - `PIDJSONDataset` class:
   - Handles JSON parsing, box sanitization(i added this because some bounding boxes were too small, so had to make them atleast the minimum size), and preprocessing.
