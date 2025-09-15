@@ -8,6 +8,7 @@ I tried training a yolov8n locally on macOS first, but two problem plagued me ->
 So after this I converted the dataset into zip files and uploaded to huggingface (This makes it really easy to download on cloud GPUs, taking ~10s to download 1 GB).
 I then went ahead with Pytorch Faster R-CNN model, and since I already had the annotations, it was easy to use a pytorch dataset and dataloader.
 I was confused on what was the difference between `line` and `line2`, so i visualized the bounding boxes and found out that `line2` is the boundary lines for the whole diagram.
+I used fast.ai for these experiments.
 
 ## Approach 1 - [notebook](./notebooks/individual.ipynb)
 
@@ -132,6 +133,7 @@ The text detection is very bad and only OCR can help us here.
 
 I found this blog which was very interesting - https://devblogs.microsoft.com/ise/engineering-document-pid-digitization  
 It refers to a research paper - https://academic.oup.com/jcde/article/9/4/1298/6611631?login=false
+https://scholar.google.com/scholar_url?url=https://academic.oup.com/jcde/article-pdf/9/4/1298/45047763/qwac056.pdf&hl=en&sa=T&oi=ucasa&ct=ufr&ei=Z3rFaN74HPmI6rQPkqGmqQg&scisig=AAZF9b_FWFZVi7lkg4eUBXo8bzC5
 
 1. Using a OCR model for the `word` task would be much better than an object detection model. Maybe adding a VLM would help in understanding how the text is associated with certain symbols/elements, along with extracting structured texts like the `table` and `keyValue`
 2. I tried the Standard Hough Transform algorithm mentioned in the blog but I felt other algorithms/transforms could be explored further for getting line detection right.

@@ -129,7 +129,7 @@ class Trainer:
         """
         Validation pass — still computes loss (model must stay in train mode for this).
         """
-        self.model.train()
+        self.model.eval()
         running_loss = 0.0
         batches = 0
 

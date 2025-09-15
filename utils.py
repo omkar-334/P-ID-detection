@@ -1,3 +1,7 @@
+import json
+import math
+import os
+
 import cv2
 import matplotlib.pyplot as plt
 from huggingface_hub import (
@@ -82,3 +86,58 @@ def plot_bbox_on_image(bbox, image_path="boxes/0.jpg", zoom=False):
         plt.imshow(image_rgb)
         plt.axis("off")
         plt.show()
+
+
+def sanitize(bbox, min_size=1.0):
+    """
+    Ensure x1 < x2, y1 < y2 and box has at least min_size width/height.
+    """
+    x1, y1, x2, y2 = bbox
+    x1_, x2_ = min(x1, x2), max(x1, x2)
+    y1_, y2_ = min(y1, y2), max(y1, y2)
+    if x2_ - x1_ < min_size:
+        x2_ = x1_ + min_size
+    if y2_ - y1_ < min_size:
+        y2_ = y1_ + min_size
+    return [x1_, y1_, x2_, y2_]
+
+
+ANN_DIR = "dataset/annotations"  # folder with {index}.json
+THRESHOLD = 700  # diagonal cutoff
+
+
+def classify_size(bbox, threshold=THRESHOLD):
+    """
+    Compute the diagonal length and classify as 'small' or 'large'.
+    Returns both classification and diagonal length.
+    """
+    x1, y1, x2, y2 = bbox
+    w, h = x2 - x1, y2 - y1
+    diag = math.sqrt(w**2 + h**2)
+    size = "small" if diag <= threshold else "large"
+    return size, diag
+
+
+def add_size_to_annotations():
+    files = [f for f in os.listdir(ANN_DIR) if f.endswith(".json")]
+    for fname in files:
+        fpath = os.path.join(ANN_DIR, fname)
+        with open(fpath) as f:
+            data = json.load(f)
+
+        # Add size and diagonal fields to each object
+        for obj in data.get("objects", []):
+            if "bbox" in obj:
+                size, diag = classify_size(obj["bbox"])
+                obj["size"] = size
+                obj["diag"] = diag
+
+        # Overwrite JSON file with new fields
+        with open(fpath, "w") as f:
+            json.dump(data, f, indent=2)
+
+        print(f"Updated {fname}")
+
+
+if __name__ == "__main__":
+    add_size_to_annotations()
